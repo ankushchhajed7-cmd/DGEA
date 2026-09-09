@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0c">
+<title>DGEA</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+:root{
+  --bg:#0a0a0c; --card:#141418; --card2:#1b1b21; --line:#2a2a33;
+  --amber:#ffb300; --amber-dim:#8a6200;
+  --green:#22c55e; --red:#ef4444; --blue:#38bdf8;
+  --txt:#e7e7ea; --mut:#7d7d8a;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--txt);
+  font-family:var(--mono);font-size:13px;padding-bottom:40px}
+.wrap{max-width:520px;margin:0 auto;padding:10px 10px calc(20px + env(safe-area-inset-bottom))}
+
+header{display:flex;align-items:center;gap:8px;padding:10px 4px 12px;position:sticky;top:0;
+  background:linear-gradient(var(--bg) 80%,transparent);z-index:20}
+.logo{font-size:19px;font-weight:700;color:var(--amber);letter-spacing:2px}
+.sub{font-size:10px;color:var(--mut)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+.dot.off{background:var(--red);box-shadow:0 0 8px var(--red)}
+.spacer{flex:1}
+.ibtn{background:var(--card);border:1px solid var(--line);color:var(--amber);
+  width:34px;height:34px;border-radius:9px;font-size:15px;cursor:pointer}
+
+.stale{display:none;background:#3a2a00;border:1px solid var(--amber);color:var(--amber);
+  padding:8px 10px;border-radius:9px;margin-bottom:10px;font-size:11px;text-align:center}
+body.is-stale .stale{display:block}
+body.is-stale .wrap{opacity:.68}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:12px;margin-bottom:10px}
+.ttl{font-size:10px;color:var(--mut);letter-spacing:1.5px;margin-bottom:8px;text-transform:uppercase}
+
+.big{display:flex;justify-content:space-between;align-items:flex-end;gap:6px}
+.big .v{font-size:26px;font-weight:700;letter-spacing:-.5px}
+.big .s{font-size:11px;color:var(--mut);text-align:right;line-height:1.5}
+
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:10px}
+.tile .k{font-size:9px;color:var(--mut);letter-spacing:1.2px;text-transform:uppercase}
+.tile .v{font-size:19px;font-weight:700;margin-top:4px}
+.tile .n{font-size:10px;color:var(--mut);margin-top:2px}
+
+.pos{color:var(--green)} .neg{color:var(--red)} .amb{color:var(--amber)} .mut{color:var(--mut)}
+
+.bar{height:6px;background:var(--card2);border-radius:4px;overflow:hidden;margin-top:7px}
+.bar i{display:block;height:100%;background:var(--amber);border-radius:4px;transition:width .4s}
+.bar i.g{background:var(--green)} .bar i.r{background:var(--red)}
+
+.leg{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.leg:last-child{border-bottom:none}
+.leg .sym{font-weight:700;font-size:12px}
+.leg .tag{font-size:9px;padding:2px 6px;border-radius:5px;border:1px solid var(--line);color:var(--mut)}
+.tag.buy{color:var(--green);border-color:#1c4a2c}
+.tag.sell{color:var(--red);border-color:#4a1c1c}
+.leg .pl{margin-left:auto;font-weight:700}
+
+.rowline{display:flex;justify-content:space-between;padding:5px 0;font-size:11px}
+.rowline b{font-weight:700}
+
+.chart{display:flex;align-items:flex-end;gap:2px;height:78px;margin-top:6px}
+.chart div{flex:1;background:var(--amber-dim);border-radius:2px 2px 0 0;min-height:2px}
+.chart div.hi{background:var(--red)}
+.axis{display:flex;justify-content:space-between;font-size:9px;color:var(--mut);margin-top:4px}
+
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{color:var(--mut);font-weight:400;font-size:9px;text-align:right;padding:5px 3px;
+  letter-spacing:1px;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+td{padding:6px 3px;text-align:right;border-bottom:1px solid #1e1e24}
+
+.feed{max-height:280px;overflow-y:auto}
+.ev{display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid #1e1e24;font-size:11px}
+.ev .ty{font-size:9px;padding:2px 5px;border-radius:4px;background:var(--card2);color:var(--mut);min-width:74px;text-align:center}
+.ev .ty.tp{color:var(--green)} .ev .ty.op{color:var(--blue)} .ev .ty.fl{color:var(--red)}
+.ev .tm{color:var(--mut);font-size:10px}
+.ev .pl{margin-left:auto;font-weight:700}
+
+.status{text-align:center;font-size:11px;padding:9px;border-radius:9px;
+  background:var(--card2);border:1px solid var(--line);color:var(--amber);margin-bottom:10px}
+
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;
+  align-items:flex-end;justify-content:center;z-index:60}
+.modal.on{display:flex}
+.sheet{background:var(--card);border:1px solid var(--line);border-radius:16px 16px 0 0;
+  width:100%;max-width:520px;padding:16px 14px calc(24px + env(safe-area-inset-bottom));max-height:88vh;overflow-y:auto}
+label{display:block;font-size:10px;color:var(--mut);margin:10px 0 4px;letter-spacing:1px;text-transform:uppercase}
+input,select{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--txt);
+  padding:10px;border-radius:9px;font-family:var(--mono);font-size:13px}
+.btn{width:100%;background:var(--amber);color:#000;border:none;padding:12px;
+  border-radius:10px;font-weight:700;font-family:var(--mono);margin-top:14px;font-size:13px}
+.btn.sec{background:var(--card2);color:var(--txt);border:1px solid var(--line);margin-top:8px}
+.hint{font-size:10px;color:var(--mut);margin-top:5px;line-height:1.5}
+.tabs{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto}
+.tab{padding:7px 12px;border-radius:8px;background:var(--card);border:1px solid var(--line);
+  color:var(--mut);font-size:11px;white-space:nowrap}
+.tab.on{color:#000;background:var(--amber);border-color:var(--amber);font-weight:700}
+footer{text-align:center;color:var(--mut);font-size:9px;padding:14px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="logo">DGEA</div>
+      <div class="sub" id="hSub">dual gold monitor</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="dot" id="hDot"></div>
+    <button class="ibtn" id="bRef">&#8635;</button>
+    <button class="ibtn" id="bSet">&#9881;</button>
+  </header>
+
+  <div class="stale" id="staleBar">DATA STALE — EA se update nahi aa raha</div>
+  <div class="tabs" id="tabs"></div>
+
+  <!-- BALANCE -->
+  <div class="card">
+    <div class="ttl">Account</div>
+    <div class="big">
+      <div><div class="v" id="vEquity">--</div><div class="sub">equity</div></div>
+      <div class="s">
+        Balance <b id="vBal">--</b><br>
+        Floating <b id="vFloat">--</b><br>
+        Opening <b id="vOpen">--</b>
+      </div>
+    </div>
+    <div class="bar"><i id="barGrowth" style="width:0%"></i></div>
+    <div class="rowline"><span class="mut">Growth from opening</span><b id="vGrowth">--</b></div>
+  </div>
+
+  <!-- TILES -->
+  <div class="grid">
+    <div class="tile">
+      <div class="k">Today P/L</div>
+      <div class="v" id="tDayPL">--</div>
+      <div class="n" id="tDayPct">--</div>
+      <div class="bar"><i id="barDay" style="width:0%"></i></div>
+      <div class="n" id="tDayTgt">target --</div>
+    </div>
+    <div class="tile">
+      <div class="k">Today cycles</div>
+      <div class="v amb" id="tDayCyc">--</div>
+      <div class="n" id="tCycNeed">--</div>
+    </div>
+    <div class="tile">
+      <div class="k">Daily DD %</div>
+      <div class="v" id="tDayDD">--</div>
+      <div class="n" id="tDayDDd">--</div>
+    </div>
+    <div class="tile">
+      <div class="k">Monthly DD %</div>
+      <div class="v" id="tMonDD">--</div>
+      <div class="n" id="tMonDDd">--</div>
+    </div>
+    <div class="tile">
+      <div class="k">Total P/L</div>
+      <div class="v" id="tTotPL">--</div>
+      <div class="n" id="tTotPct">--</div>
+    </div>
+    <div class="tile">
+      <div class="k">Total cycles</div>
+      <div class="v" id="tTotCyc">--</div>
+      <div class="n" id="tAvgCyc">--</div>
+    </div>
+    <div class="tile">
+      <div class="k">Avg / cycle</div>
+      <div class="v" id="tAvgP">--</div>
+      <div class="n" id="tAvgT">--</div>
+    </div>
+    <div class="tile">
+      <div class="k">Max float DD</div>
+      <div class="v neg" id="tMaxFl">--</div>
+      <div class="n" id="tMaxFlPct">--</div>
+    </div>
+  </div>
+
+  <div class="status" id="vStatus">--</div>
+
+  <!-- LIVE BASKET -->
+  <div class="card">
+    <div class="ttl">Live basket</div>
+    <div id="legs"></div>
+    <div class="bar"><i id="barBask" style="width:0%"></i></div>
+    <div class="rowline"><span class="mut">Basket P/L</span><b id="vBask">--</b></div>
+    <div class="rowline"><span class="mut">Target</span><b id="vTgt">--</b></div>
+    <div class="rowline"><span class="mut">Worst this cycle</span><b id="vWorst">--</b></div>
+    <div class="rowline"><span class="mut">Cycle age</span><b id="vAge">--</b></div>
+    <div class="rowline"><span class="mut">Spread cost (approx)</span><b id="vSprCost">--</b></div>
+  </div>
+
+  <!-- DD CHART -->
+  <div class="card">
+    <div class="ttl">Daily max DD % — last 30 days</div>
+    <div class="chart" id="ddChart"></div>
+    <div class="axis"><span id="ddFirst">--</span><span id="ddLast">--</span></div>
+    <div class="rowline"><span class="mut">Worst day</span><b id="ddWorst">--</b></div>
+    <div class="rowline"><span class="mut">Average</span><b id="ddAvg">--</b></div>
+    <div class="rowline"><span class="mut">Green days</span><b id="ddGreen">--</b></div>
+    <div class="rowline"><span class="mut">Recovery factor</span><b id="ddRF">--</b></div>
+  </div>
+
+  <!-- MONTHS -->
+  <div class="card">
+    <div class="ttl">Monthly max DD %</div>
+    <table><tbody id="monTbl"></tbody></table>
+  </div>
+
+  <!-- DAILY TABLE -->
+  <div class="card">
+    <div class="ttl">Daily log</div>
+    <table>
+      <thead><tr><th>Date</th><th>Cycles</th><th>P/L</th><th>DD%</th></tr></thead>
+      <tbody id="dayTbl"></tbody>
+    </table>
+  </div>
+
+  <!-- FEED -->
+  <div class="card">
+    <div class="ttl">Activity</div>
+    <div class="feed" id="feed"></div>
+  </div>
+
+  <footer>DGEA dashboard v1.0.1 &middot; <span id="fLast">--</span></footer>
+</div>
+
+<!-- SETTINGS -->
+<div class="modal" id="modal">
+  <div class="sheet">
+    <div class="ttl">Settings</div>
+    <label>Accounts (number:LABEL:OPENING, comma se alag)</label>
+    <input id="sAcct" placeholder="433468654:DEMO:500">
+    <div class="hint">Ek se zyada account: 433468654:DEMO:500, 160123652:LIVE:500</div>
+    <label>Firebase RTDB host</label>
+    <input id="sHost">
+    <label>Node</label>
+    <input id="sNode">
+    <label>Daily target %</label>
+    <input id="sTgt" type="number" step="0.1">
+    <label>Refresh (seconds)</label>
+    <input id="sPoll" type="number" min="5">
+    <button class="btn" id="sSave">SAVE</button>
+    <button class="btn sec" id="sClose">CLOSE</button>
+    <div class="hint">Data sirf display hai — yahan se koi trade control nahi hota.</div>
+  </div>
+</div>
+
+<script>
+'use strict';
+const APP_VER = '1.0.1';
+const DEF = {
+  acct: '433468654:DEMO:500',
+  host: 'https://forexdiagnosis-default-rtdb.asia-southeast1.firebasedatabase.app',
+  node: 'dg',
+  tgt : 1,
+  poll: 15
+};
+let CFG = load();
+let ACCOUNTS = [], CUR = 0, TIMER = null, LAST = {};
+
+function load(){
+  try{ return Object.assign({}, DEF, JSON.parse(localStorage.getItem('dgea_cfg')||'{}')); }
+  catch(e){ return Object.assign({}, DEF); }
+}
+function save(){ try{ localStorage.setItem('dgea_cfg', JSON.stringify(CFG)); }catch(e){} }
+
+function parseAccounts(){
+  ACCOUNTS = CFG.acct.split(',').map(s=>s.trim()).filter(Boolean).map(s=>{
+    const p = s.split(':');
+    return { num:(p[0]||'').trim(), label:(p[1]||p[0]||'').trim(), open:parseFloat(p[2])||500 };
+  });
+  if(CUR >= ACCOUNTS.length) CUR = 0;
+}
+
+const $ = id => document.getElementById(id);
+const f2 = n => (n===null||n===undefined||isNaN(n)) ? '--' : (n<0?'-':'') + '$' + Math.abs(n).toFixed(2);
+const pc = n => (n===null||n===undefined||isNaN(n)) ? '--' : n.toFixed(2) + '%';
+function cls(el,n){ el.classList.remove('pos','neg','amb','mut'); el.classList.add(n>0?'pos':(n<0?'neg':'mut')); }
+function hhmm(ts){ const d=new Date(ts*1000);
+  return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+function dmy(ts){ const d=new Date(ts*1000);
+  return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'); }
+
+async function get(path){
+  const a = ACCOUNTS[CUR]; if(!a) return null;
+  const url = CFG.host + '/' + CFG.node + '/' + a.num + '/' + path;
+  try{
+    const r = await fetch(url, {cache:'no-store'});
+    if(!r.ok) return null;
+    return await r.json();
+  }catch(e){ return null; }
+}
+
+async function refresh(){
+  const a = ACCOUNTS[CUR];
+  if(!a){ $('vStatus').textContent = 'Settings me account number daalein'; return; }
+  $('hSub').textContent = a.label + ' · ' + a.num;
+
+  const [state, stats, dd, ddm, ev] = await Promise.all([
+    get('state.json'), get('stats.json'), get('dd.json'), get('ddm.json'),
+    get('events.json?orderBy="$key"&limitToLast=40')
+  ]);
+
+  LAST = {state, stats, dd, ddm, ev};
+  render(state||{}, stats||{}, dd||{}, ddm||{}, ev||{}, a);
+}
+
+function render(st, ss, dd, ddm, ev, acct){
+  const now = Math.floor(Date.now()/1000);
+  const age = st.ts ? now - st.ts : 999999;
+  const stale = age > 120;
+  document.body.classList.toggle('is-stale', stale);
+  $('hDot').classList.toggle('off', stale);
+  $('staleBar').textContent = 'DATA STALE — last update ' +
+    (st.ts ? Math.floor(age/60)+' min pehle' : 'kabhi nahi');
+  $('fLast').textContent = st.ts ? ('updated ' + hhmm(st.ts)) : 'no data';
+
+  const openBal = st.openBal || acct.open || 500;
+  const bal = num(st.bal), eq = num(st.eq), flt = eq - bal;
+
+  $('vEquity').textContent = f2(eq);
+  $('vBal').textContent    = f2(bal);
+  $('vFloat').textContent  = f2(flt);
+  $('vOpen').textContent   = f2(openBal);
+  cls($('vEquity'), eq - openBal);
+
+  const growth = openBal ? (bal - openBal)/openBal*100 : 0;
+  $('vGrowth').textContent = pc(growth);
+  cls($('vGrowth'), growth);
+  $('barGrowth').style.width = Math.min(100, Math.abs(growth)*4) + '%';
+  $('barGrowth').className = growth>=0 ? 'g' : 'r';
+
+  // ---- today
+  const dayPL  = bal - num(st.dayStart, bal);
+  const dayPct = openBal ? dayPL/openBal*100 : 0;
+  const tgtPct = num(st.dayTgtPct, CFG.tgt);
+  const tgtAmt = openBal * tgtPct/100;
+
+  $('tDayPL').textContent  = f2(dayPL);  cls($('tDayPL'), dayPL);
+  $('tDayPct').textContent = pc(dayPct);
+  $('tDayTgt').textContent = 'target ' + f2(tgtAmt) + ' (' + tgtPct + '%)';
+  const dp = tgtAmt>0 ? Math.max(0, Math.min(100, dayPL/tgtAmt*100)) : 0;
+  $('barDay').style.width = dp + '%';
+  $('barDay').className = dp>=100 ? 'g' : '';
+
+  const dayCyc = num(ss.todayCycles, 0);
+  $('tDayCyc').textContent = dayCyc;
+  const perCyc = num(ss.avgProfit, num(st.target,1)) || 1;
+  const need = Math.max(0, Math.ceil((tgtAmt - dayPL)/perCyc));
+  $('tCycNeed').textContent = dayPL>=tgtAmt ? 'TARGET DONE' : (need + ' aur chahiye');
+
+  // ---- dd
+  const today = new Date().toISOString().slice(0,10);
+  const dToday = dd[today] ? num(dd[today].dd) : 0;
+  $('tDayDD').textContent = pc(dToday); cls($('tDayDD'), -dToday);
+  $('tDayDDd').textContent = f2(-openBal*dToday/100) + ' approx';
+
+  const mKey = today.slice(0,7);
+  const dMon = ddm[mKey] ? num(ddm[mKey].dd) : 0;
+  $('tMonDD').textContent = pc(dMon); cls($('tMonDD'), -dMon);
+  $('tMonDDd').textContent = mKey;
+
+  // ---- totals
+  const tot = num(ss.totalProfit, 0);
+  $('tTotPL').textContent  = f2(tot); cls($('tTotPL'), tot);
+  $('tTotPct').textContent = pc(openBal ? tot/openBal*100 : 0);
+  $('tTotCyc').textContent = num(ss.totalCycles, 0);
+  $('tAvgCyc').textContent = 'since start';
+  $('tAvgP').textContent   = f2(num(ss.avgProfit,0));
+  $('tAvgT').textContent   = num(ss.avgCycleMin,0).toFixed(0) + ' min avg';
+  const mf = num(ss.maxFloatDD, 0);
+  $('tMaxFl').textContent    = f2(mf);
+  $('tMaxFlPct').textContent = pc(openBal ? Math.abs(mf)/openBal*100 : 0) + ' of opening';
+
+  // ---- status
+  const blk = st.block || '--';
+  let statusTxt = (st.trading===false ? 'TRADING OFF · ' : '') + blk +
+    (num(st.open,0)>0 ? '  ·  ' + st.open + ' positions open' : '');
+  const cd = num(st.cooldown,0) - age;
+  if(cd > 0 && num(st.open,0)===0){
+    statusTxt = 'COOLDOWN ' + Math.floor(cd/60) + ':' +
+      String(Math.floor(cd%60)).padStart(2,'0') + ' — next cycle';
+  }
+  $('vStatus').textContent = statusTxt;
+
+  // ---- legs
+  const legs = [st.leg1, st.leg2].filter(Boolean);
+  $('legs').innerHTML = legs.length ? legs.map(L=>{
+    const p = num(L.pnl);
+    return '<div class="leg"><span class="sym">'+esc(L.sym)+'</span>'+
+      '<span class="tag '+(L.dir==='BUY'?'buy':'sell')+'">'+esc(L.dir)+'</span>'+
+      '<span class="tag">'+num(L.n,0)+' pos</span>'+
+      '<span class="tag">sp '+num(L.spread,0)+'</span>'+
+      '<span class="pl '+(p>0?'pos':(p<0?'neg':'mut'))+'">'+f2(p)+'</span></div>';
+  }).join('') : '<div class="rowline mut">koi data nahi</div>';
+
+  const bask = num(st.basket), tgt = num(st.target, 1);
+  $('vBask').textContent = f2(bask); cls($('vBask'), bask);
+  $('vTgt').textContent  = f2(tgt);
+  $('vWorst').textContent= f2(num(st.worstNow)); cls($('vWorst'), num(st.worstNow));
+  $('vAge').textContent  = num(st.open,0)>0 ? num(st.cycleAge,0)+' min' : 'flat';
+  const bp = tgt>0 ? Math.max(0, Math.min(100, bask/tgt*100)) : 0;
+  $('barBask').style.width = bp+'%';
+  $('barBask').className = bask<0 ? 'r' : (bp>=100?'g':'');
+
+  const sprCost = legs.reduce((s,L)=> s + num(L.spread,0), 0);
+  $('vSprCost').textContent = sprCost ? (sprCost.toFixed(0) + ' pts dono legs') : '--';
+
+  // ---- dd chart / table
+  const keys = Object.keys(dd).sort();
+  const last30 = keys.slice(-30);
+  const vals = last30.map(k=>num(dd[k].dd));
+  const mx = Math.max(0.5, ...vals);
+  $('ddChart').innerHTML = last30.map(k=>{
+    const v = num(dd[k].dd);
+    return '<div class="'+(v>=mx*0.85&&v>0?'hi':'')+'" style="height:'+
+      Math.max(2, v/mx*100)+'%" title="'+k+' '+v.toFixed(2)+'%"></div>';
+  }).join('') || '<div style="height:2%"></div>';
+  $('ddFirst').textContent = last30[0] || '--';
+  $('ddLast').textContent  = last30[last30.length-1] || '--';
+  $('ddWorst').textContent = vals.length ? pc(Math.max(...vals)) : '--';
+  $('ddAvg').textContent   = vals.length ? pc(vals.reduce((a,b)=>a+b,0)/vals.length) : '--';
+
+  const green = keys.filter(k=>num(dd[k].pnl)>0).length;
+  $('ddGreen').textContent = keys.length ? (green + ' / ' + keys.length) : '--';
+  const worstAbs = Math.abs(num(ss.maxFloatDD,0));
+  $('ddRF').textContent = worstAbs>0 ? (tot/worstAbs).toFixed(2) + 'x' : '--';
+
+  const rows = keys.slice(-30).reverse();
+  $('dayTbl').innerHTML = rows.map(k=>{
+    const d = dd[k], p = num(d.pnl);
+    return '<tr><td>'+k.slice(5)+'</td><td>'+num(d.cycles,0)+'</td>'+
+      '<td class="'+(p>0?'pos':(p<0?'neg':'mut'))+'">'+f2(p)+'</td>'+
+      '<td class="amb">'+num(d.dd).toFixed(2)+'</td></tr>';
+  }).join('') || '<tr><td colspan="4" class="mut">koi data nahi</td></tr>';
+
+  const mk = Object.keys(ddm).sort().reverse().slice(0,6);
+  $('monTbl').innerHTML = mk.map(k=>
+    '<tr><td>'+k+'</td><td class="amb">'+num(ddm[k].dd).toFixed(2)+'%</td></tr>'
+  ).join('') || '<tr><td class="mut">koi data nahi</td></tr>';
+
+  // ---- feed
+  const list = Object.keys(ev).map(k=>ev[k]).filter(Boolean).sort((a,b)=>num(b.t)-num(a.t)).slice(0,40);
+  $('feed').innerHTML = list.map(e=>{
+    const p = num(e.pnl);
+    const c = e.type==='TP_HIT' ? 'tp' : (e.type==='CYCLE_OPEN' ? 'op' : 'fl');
+    return '<div class="ev"><span class="ty '+c+'">'+esc(e.type)+'</span>'+
+      '<span class="tm">'+dmy(e.t)+' '+hhmm(e.t)+'</span>'+
+      (e.dur&&num(e.dur)>0 ? '<span class="tm">'+num(e.dur).toFixed(0)+'m</span>' : '')+
+      '<span class="pl '+(p>0?'pos':(p<0?'neg':'mut'))+'">'+(e.type==='CYCLE_OPEN'?'--':f2(p))+'</span></div>';
+  }).join('') || '<div class="rowline mut">koi event nahi</div>';
+}
+
+function num(v, d){ const n = parseFloat(v); return isNaN(n) ? (d===undefined?0:d) : n; }
+function esc(s){ return String(s===undefined?'':s).replace(/[<>&"]/g, c =>
+  ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c])); }
+
+function drawTabs(){
+  $('tabs').innerHTML = ACCOUNTS.length>1 ? ACCOUNTS.map((a,i)=>
+    '<div class="tab '+(i===CUR?'on':'')+'" data-i="'+i+'">'+esc(a.label)+'</div>').join('') : '';
+  $('tabs').querySelectorAll('.tab').forEach(t=>{
+    t.onclick = ()=>{ CUR = +t.dataset.i; drawTabs(); refresh(); };
+  });
+}
+
+function openSet(){
+  $('sAcct').value = CFG.acct; $('sHost').value = CFG.host;
+  $('sNode').value = CFG.node; $('sTgt').value  = CFG.tgt;
+  $('sPoll').value = CFG.poll; $('modal').classList.add('on');
+}
+$('bSet').onclick = openSet;
+$('sClose').onclick = ()=> $('modal').classList.remove('on');
+$('bRef').onclick = refresh;
+$('sSave').onclick = ()=>{
+  CFG.acct = $('sAcct').value.trim() || DEF.acct;
+  CFG.host = ($('sHost').value.trim() || DEF.host).replace(/\/$/,'');
+  CFG.node = $('sNode').value.trim() || DEF.node;
+  CFG.tgt  = parseFloat($('sTgt').value) || 1;
+  CFG.poll = Math.max(5, parseInt($('sPoll').value) || 15);
+  save(); parseAccounts(); drawTabs();
+  $('modal').classList.remove('on');
+  start();
+};
+
+function start(){
+  if(TIMER) clearInterval(TIMER);
+  refresh();
+  TIMER = setInterval(()=>{ if(!document.hidden) refresh(); }, CFG.poll*1000);
+}
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) refresh(); });
+
+parseAccounts(); drawTabs(); start();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=> navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>
