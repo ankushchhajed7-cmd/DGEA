@@ -293,7 +293,7 @@ footer{text-align:center;color:var(--mut);font-size:9px;padding:16px 0;letter-sp
     </div>
   </div>
 
-  <footer>DGEA dashboard v1.3.0 &middot; <span id="fLast">--</span></footer>
+  <footer>DGEA dashboard v1.3.1 &middot; <span id="fLast">--</span></footer>
 </div>
 
 <div class="modal" id="modal">
@@ -318,7 +318,7 @@ footer{text-align:center;color:var(--mut);font-size:9px;padding:16px 0;letter-sp
 
 <script>
 'use strict';
-const APP_VER = '1.3.0';
+const APP_VER = '1.3.1';
 const DEF = {
   acct: '463946134:EXNESS:500',
   host: 'https://forexdiagnosis-default-rtdb.asia-southeast1.firebasedatabase.app',
@@ -406,7 +406,7 @@ function render(st, ss, dd, ddm, ev, acct){
     : ('EA SE KOI DATA NAHI<br><span style="color:#8b93a1">Firebase rules me <b>dg</b> node, MT5 URL whitelist,<br>aur account number check karein</span>');
   $('fLast').textContent = st.ts ? ('updated ' + hhmm(st.ts)) : 'no data';
 
-  const openBal = st.openBal || acct.open || 500;
+  const openBal = acct.open || num(st.openBal, 500);
   const bal = num(st.bal), eq = num(st.eq), flt = eq - bal;
   const hasData = !!st.ts;
 
@@ -548,7 +548,7 @@ function renderCompare(all){
   const mKey  = today.slice(0,7);
 
   const D = all.map(d=>{
-    const openBal = d.st.openBal || d.acct.open || 500;
+    const openBal = d.acct.open || num(d.st.openBal, 500);
     const bal = num(d.st.bal), eq = num(d.st.eq);
     const dayPL = d.st.ts ? bal - num(d.st.dayStart, bal) : 0;
     const tot   = num(d.ss.totalProfit, 0);
