@@ -1,5 +1,5 @@
-// DGEA service worker v1.3.1 — network-first
-const CACHE = 'dgea-v1.3.1';
+// DGEA service worker v1.3.2 — network-first
+const CACHE = 'dgea-v1.3.2';
 const SHELL = ['./', './index.html', './manifest.json', './icon.svg'];
 
 self.addEventListener('install', e => {

@@ -250,6 +250,8 @@ footer{text-align:center;color:var(--mut);font-size:9px;padding:16px 0;letter-sp
       <div class="rowline"><span>Total floating</span><b id="vBask">--</b></div>
       <div class="rowline"><span>Next basket at</span><b id="vNextAdd">--</b></div>
       <div class="rowline"><span>Target per basket</span><b id="vTgt">--</b></div>
+      <div class="rowline"><span>Close trigger</span><b id="vTrig">--</b></div>
+      <div class="rowline"><span>Slippage (total)</span><b id="vSlip">--</b></div>
       <div class="rowline"><span>Worst total now</span><b id="vWorst">--</b></div>
       <div class="rowline"><span>Spread (both legs)</span><b id="vSprCost">--</b></div>
     </div>
@@ -293,7 +295,7 @@ footer{text-align:center;color:var(--mut);font-size:9px;padding:16px 0;letter-sp
     </div>
   </div>
 
-  <footer>DGEA dashboard v1.3.1 &middot; <span id="fLast">--</span></footer>
+  <footer>DGEA dashboard v1.3.2 &middot; <span id="fLast">--</span></footer>
 </div>
 
 <div class="modal" id="modal">
@@ -318,7 +320,7 @@ footer{text-align:center;color:var(--mut);font-size:9px;padding:16px 0;letter-sp
 
 <script>
 'use strict';
-const APP_VER = '1.3.1';
+const APP_VER = '1.3.2';
 const DEF = {
   acct: '463946134:EXNESS:500',
   host: 'https://forexdiagnosis-default-rtdb.asia-southeast1.firebasedatabase.app',
@@ -486,6 +488,10 @@ function render(st, ss, dd, ddm, ev, acct){
   const tf = num(st.totalF);
   $('vBask').textContent = f2(tf); cls($('vBask'), tf);
   $('vTgt').textContent  = f2(tgt) + ' × ' + num(st.maxB,3);
+  const trig = num(st.trigger, tgt);
+  $('vTrig').textContent = f2(trig);
+  const slip = num(ss.slipTotal, 0);
+  $('vSlip').textContent = f2(slip); cls($('vSlip'), slip);
   $('vWorst').textContent= f2(num(st.worstNow)); cls($('vWorst'), num(st.worstNow));
   const na = num(st.nextAdd);
   $('vNextAdd').textContent = na>0
